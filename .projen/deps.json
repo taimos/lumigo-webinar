@@ -1,12 +1,16 @@
 {
   "dependencies": [
     {
+      "name": "@types/aws-lambda",
+      "type": "build"
+    },
+    {
       "name": "@types/jest",
       "type": "build"
     },
     {
       "name": "@types/node",
-      "version": "^12",
+      "version": "^14",
       "type": "build"
     },
     {
@@ -21,7 +25,7 @@
     },
     {
       "name": "aws-cdk",
-      "version": "^2.1.0",
+      "version": "^2.27.0",
       "type": "build"
     },
     {
@@ -75,7 +79,6 @@
     },
     {
       "name": "ts-node",
-      "version": "^9",
       "type": "build"
     },
     {
@@ -84,7 +87,7 @@
     },
     {
       "name": "aws-cdk-lib",
-      "version": "^2.1.0",
+      "version": "^2.27.0",
       "type": "runtime"
     },
     {

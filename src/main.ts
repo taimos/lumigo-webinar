@@ -1,23 +1,20 @@
-import { App, Stack, StackProps } from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-
-export class MyStack extends Stack {
-  constructor(scope: Construct, id: string, props: StackProps = {}) {
-    super(scope, id, props);
-
-    // define resources here...
-  }
-}
-
-// for development, use account/region from cdk cli
-const devEnv = {
-  account: process.env.CDK_DEFAULT_ACCOUNT,
-  region: process.env.CDK_DEFAULT_REGION,
-};
+import { App } from 'aws-cdk-lib';
+// import { MyContainerStack } from './container-stack';
+import { MyLambdaStack } from './lambda-stack';
 
 const app = new App();
 
-new MyStack(app, 'lumigo-webinar-dev', { env: devEnv });
-// new MyStack(app, 'lumigo-webinar-prod', { env: prodEnv });
+new MyLambdaStack(app, 'lumigo-webinar-lambda', {
+  env: {
+    account: '538118019757',
+    region: 'eu-central-1',
+  },
+});
+// new MyContainerStack(app, 'lumigo-webinar-container', {
+//   env: {
+//     account: '538118019757',
+//     region: 'eu-central-1',
+//   },
+// });
 
 app.synth();
