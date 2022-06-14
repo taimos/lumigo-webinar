@@ -5,12 +5,13 @@ import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 
 export class MyLambdaStack extends Stack {
-  constructor(scope: Construct, id: string, props: StackProps = {}) {
+  constructor(scope: Construct, id: string, lumigoTokenSecretName: string, props: StackProps = {}) {
     super(scope, id, props);
 
     const handler = new NodejsFunction(this, 'TestLambda', {
       environment: {
-        LUMIGO_TRACER_TOKEN: SecretValue.secretsManager('AccessKeys', { jsonField: 'LumigoToken' }).toString(),
+        LUMIGO_TRACER_TOKEN: SecretValue.secretsManager(lumigoTokenSecretName).toString(),
+        LUMIGO_ENDPOINT: String(process.env.LUMIGO_ENDPOINT),
         AWS_LAMBDA_EXEC_WRAPPER: '/opt/lumigo_wrapper',
       },
       layers: [
