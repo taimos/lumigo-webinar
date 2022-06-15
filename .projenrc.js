@@ -4,6 +4,6 @@ const project = new awscdk.AwsCdkTypeScriptApp({
   defaultReleaseBranch: 'main',
   name: 'lumigo-webinar',
   deps: [],
-  devDeps: ['@types/aws-lambda'],
+  devDeps: ['@types/aws-lambda', 'esbuild'],
 });
 project.synth();
