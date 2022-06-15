@@ -9,6 +9,7 @@ import { IQueue } from 'aws-cdk-lib/aws-sqs';
 import { Construct } from 'constructs';
 
 export interface ContainerStackProps extends StackProps {
+  readonly lumigoEndpoint: URL;
   readonly queue: IQueue;
 }
 
@@ -50,7 +51,7 @@ export class MyContainerStack extends Stack {
         }),
         environment: {
           AUTOWRAPT_BOOTSTRAP: 'lumigo_opentelemetry', // Activate the Lumigo instrumentation!
-          LUMIGO_ENDPOINT: 'https://angels-edge-app-us-west-2.angels.golumigo.com/v1/traces',
+          LUMIGO_ENDPOINT: props.lumigoEndpoint.toString(),
           TARGET_QUEUE_URL: props.queue.queueUrl!,
           OTEL_SERVICE_NAME: 'lumigo-container-demo', // This will be the service name in Lumigo
         },
