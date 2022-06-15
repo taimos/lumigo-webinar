@@ -6,11 +6,15 @@ import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Queue, QueueEncryption } from 'aws-cdk-lib/aws-sqs';
 import { Construct } from 'constructs';
 
+export interface LambdaStackProps extends StackProps {
+  readonly lumigoEndpoint: URL;
+}
+
 export class MyLambdaStack extends Stack {
   public readonly api: RestApi;
   public readonly queue: Queue;
 
-  constructor(scope: Construct, id: string, props: StackProps = {}) {
+  constructor(scope: Construct, id: string, props: LambdaStackProps) {
     super(scope, id, props);
 
     this.queue = new Queue(this, 'LumigoDemoQueue', {
@@ -20,7 +24,7 @@ export class MyLambdaStack extends Stack {
     const handler = new NodejsFunction(this, 'TestLambda', {
       environment: {
         LUMIGO_TRACER_TOKEN: SecretValue.secretsManager('AccessKeys', { jsonField: 'LumigoToken' }).toString(), // Pity we cannot mount secrets in the same way ECS can :-(
-        LUMIGO_TRACER_HOST: 'angels-edge-app-us-west-2.angels.golumigo.com',
+        LUMIGO_TRACER_HOST: props.lumigoEndpoint.hostname,
         AWS_LAMBDA_EXEC_WRAPPER: '/opt/lumigo_wrapper',
       },
       layers: [
