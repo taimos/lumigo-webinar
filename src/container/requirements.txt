@@ -1,0 +1,3 @@
+fastapi
+uvicorn
+lumigo_opentelemetry==0.1.5
