@@ -1,12 +1,15 @@
-import { SecretValue, Stack, StackProps } from 'aws-cdk-lib';
+import { Stack, StackProps } from 'aws-cdk-lib';
 import { LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { Vpc } from 'aws-cdk-lib/aws-ec2';
 import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 
 export class MyLambdaStack extends Stack {
-  constructor(scope: Construct, id: string, lumigoTokenSecretName: string, props: StackProps = {}) {
+  public readonly api: RestApi;
+
+  constructor(scope: Construct, id: string, lumigoTokenSecret: Secret, props: StackProps = {}) {
     super(scope, id, props);
 
     const vpc = new Vpc(this, 'LumigoDemoVpc', {
@@ -16,7 +19,7 @@ export class MyLambdaStack extends Stack {
 
     const handler = new NodejsFunction(this, 'TestLambda', {
       environment: {
-        LUMIGO_TRACER_TOKEN: SecretValue.secretsManager(lumigoTokenSecretName).toString(),
+        LUMIGO_TRACER_TOKEN: lumigoTokenSecret.secretValue.unsafeUnwrap(), // Pity we cannot mount secrets in the same way ECS can :-(
         LUMIGO_ENDPOINT: String(process.env.LUMIGO_ENDPOINT),
         AWS_LAMBDA_EXEC_WRAPPER: '/opt/lumigo_wrapper',
       },
@@ -26,7 +29,7 @@ export class MyLambdaStack extends Stack {
       vpc: vpc,
     });
 
-    const api = new RestApi(this, 'Api');
-    api.root.addMethod('GET', new LambdaIntegration(handler));
+    this.api = new RestApi(this, id);
+    this.api.root.addMethod('GET', new LambdaIntegration(handler));
   }
 }

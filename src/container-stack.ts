@@ -1,6 +1,7 @@
 import * as path from 'path';
 
 import { Stack, StackProps } from 'aws-cdk-lib';
+import { RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
 import { Repository } from 'aws-cdk-lib/aws-ecr';
 import { DockerImageAsset, Platform } from 'aws-cdk-lib/aws-ecr-assets';
@@ -11,7 +12,7 @@ import { DockerImageName, ECRDeployment } from 'cdk-ecr-deployment';
 import { Construct } from 'constructs';
 
 export class MyContainerStack extends Stack {
-  constructor(scope: Construct, id: string, lumigoTokenSecretName: string, props: StackProps = {}) {
+  constructor(scope: Construct, id: string, lumigoTokenSecret: Secret, lambdaApi: RestApi, props: StackProps = {}) {
     super(scope, id, props);
 
     // Ensure ECR repository for App image exists
@@ -65,14 +66,15 @@ export class MyContainerStack extends Stack {
         environment: {
           AUTOWRAPT_BOOTSTRAP: 'lumigo_opentelemetry', // Activate the Lumigo instrumentation!
           LUMIGO_ENDPOINT: `${String(process.env.LUMIGO_ENDPOINT)}/v1/traces`, // This will not be needed after public launch :-)
+          TARGET_URL: lambdaApi.url!,
           OTEL_SERVICE_NAME: 'lumigo-container-demo', // This will be the service name in Lumigo
         },
         secrets: {
-          LUMIGO_TRACER_TOKEN: ecs.Secret.fromSecretsManager(Secret.fromSecretNameV2(this, lumigoTokenSecretName, lumigoTokenSecretName)),
+          LUMIGO_TRACER_TOKEN: ecs.Secret.fromSecretsManager(lumigoTokenSecret),
         },
       },
       memoryLimitMiB: 1024, // Default is 512, the correct value is related with the CPU's, see https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html
-      publicLoadBalancer: false, // Default is false
+      publicLoadBalancer: true, // Default is false
     });
   }
 }

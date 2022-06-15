@@ -28,15 +28,15 @@ const stackEnvironment = {
   account: process.env.ACCOUNT,
 };
 
-new MyLumigoTokenSecretStack(app, 'lumigo-tracer-token', String(process.env.LUMIGO_TRACER_TOKEN), {
+const lumigoTokenSecretStack = new MyLumigoTokenSecretStack(app, 'lumigo-tracer-token', String(process.env.LUMIGO_TRACER_TOKEN), {
   env: stackEnvironment,
 });
 
-new MyLambdaStack(app, 'lumigo-webinar-lambda', 'lumigo-tracer-token', {
+const lambdaStack = new MyLambdaStack(app, 'lumigo-webinar-lambda', lumigoTokenSecretStack.lumigoTokenSecret, {
   env: stackEnvironment,
 });
 
-new MyContainerStack(app, 'lumigo-webinar-container', 'lumigo-tracer-token', {
+new MyContainerStack(app, 'lumigo-webinar-container', lumigoTokenSecretStack.lumigoTokenSecret, lambdaStack.api, {
   env: stackEnvironment,
 });
 
