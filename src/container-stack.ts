@@ -1,18 +1,18 @@
 import * as path from 'path';
 
 import { Stack, StackProps } from 'aws-cdk-lib';
-import { RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
 import { Repository } from 'aws-cdk-lib/aws-ecr';
 import { DockerImageAsset, Platform } from 'aws-cdk-lib/aws-ecr-assets';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import { ApplicationLoadBalancedFargateService } from 'aws-cdk-lib/aws-ecs-patterns';
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
+import { Queue } from 'aws-cdk-lib/aws-sqs';
 import { DockerImageName, ECRDeployment } from 'cdk-ecr-deployment';
 import { Construct } from 'constructs';
 
 export class MyContainerStack extends Stack {
-  constructor(scope: Construct, id: string, lumigoTokenSecret: Secret, lambdaApi: RestApi, props: StackProps = {}) {
+  constructor(scope: Construct, id: string, lumigoTokenSecret: Secret, sqsQueue: Queue, props: StackProps = {}) {
     super(scope, id, props);
 
     // Ensure ECR repository for App image exists
@@ -56,10 +56,8 @@ export class MyContainerStack extends Stack {
       vpc: vpc,
     });
 
-    const lumigoEndpoint = process.env.LUMIGO_ENDPOINT ? `${String(process.env.LUMIGO_ENDPOINT)}/v1/traces` : ''; // This will not be needed after public launch :-)
-
     // Instantiate a 1-container Fargate task with a public load balancer
-    new ApplicationLoadBalancedFargateService(this, 'LumigoDemoFargateService', {
+    const service = new ApplicationLoadBalancedFargateService(this, 'LumigoDemoFargateService', {
       cluster: cluster, // Required
       cpu: 512, // Default is 256
       // desiredCount: 6, // Default is 1
@@ -67,8 +65,8 @@ export class MyContainerStack extends Stack {
         image: ecs.ContainerImage.fromEcrRepository(appImageRepository),
         environment: {
           AUTOWRAPT_BOOTSTRAP: 'lumigo_opentelemetry', // Activate the Lumigo instrumentation!
-          LUMIGO_ENDPOINT: lumigoEndpoint,
-          TARGET_URL: lambdaApi.url!,
+          LUMIGO_ENDPOINT: 'https://angels-edge-app-us-west-2.angels.golumigo.com/v1/traces',
+          TARGET_QUEUE_URL: sqsQueue.queueUrl!,
           OTEL_SERVICE_NAME: 'lumigo-container-demo', // This will be the service name in Lumigo
         },
         secrets: {
@@ -78,5 +76,8 @@ export class MyContainerStack extends Stack {
       memoryLimitMiB: 1024, // Default is 512, the correct value is related with the CPU's, see https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html
       publicLoadBalancer: true, // Default is false
     });
+
+    // Allow the Fargate task to queue messages
+    sqsQueue.grantSendMessages(service.taskDefinition.taskRole);
   }
 }

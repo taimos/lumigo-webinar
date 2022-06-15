@@ -1,9 +1,10 @@
 import { App } from 'aws-cdk-lib';
-import 'dotenv/config'
+import 'dotenv/config';
 
-import { MyLumigoTokenSecretStack } from './lumigo-token-secret-stack';
 import { MyContainerStack } from './container-stack';
 import { MyLambdaStack } from './lambda-stack';
+import { MyLumigoTokenSecretStack } from './lumigo-token-secret-stack';
+import { MySqsStack } from './sqs-stack';
 
 var path = require('path');
 var dotenv = require('dotenv');
@@ -15,7 +16,6 @@ var dotenv = require('dotenv');
  * ```
  * ACCOUNT=538118019757
  * REGION=eu-central-1
- * LUMIGO_ENDPOINT= ... // To use with Lumigo dev envs
  * LUMIGO_TRACER_TOKEN= ...
  * ```
  */
@@ -28,15 +28,19 @@ const stackEnvironment = {
   account: process.env.ACCOUNT,
 };
 
+const sqsStack = new MySqsStack(app, 'lumigo-sqs', {
+  env: stackEnvironment,
+});
+
 const lumigoTokenSecretStack = new MyLumigoTokenSecretStack(app, 'lumigo-tracer-token', String(process.env.LUMIGO_TRACER_TOKEN), {
   env: stackEnvironment,
 });
 
-const lambdaStack = new MyLambdaStack(app, 'lumigo-webinar-lambda', lumigoTokenSecretStack.lumigoTokenSecret, {
+new MyLambdaStack(app, 'lumigo-webinar-lambda', lumigoTokenSecretStack.lumigoTokenSecret, sqsStack.queue, {
   env: stackEnvironment,
 });
 
-new MyContainerStack(app, 'lumigo-webinar-container', lumigoTokenSecretStack.lumigoTokenSecret, lambdaStack.api, {
+new MyContainerStack(app, 'lumigo-webinar-container', lumigoTokenSecretStack.lumigoTokenSecret, sqsStack.queue, {
   env: stackEnvironment,
 });
 
