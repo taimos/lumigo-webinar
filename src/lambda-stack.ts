@@ -20,7 +20,7 @@ export class MyLambdaStack extends Stack {
     const handler = new NodejsFunction(this, 'TestLambda', {
       environment: {
         LUMIGO_TRACER_TOKEN: lumigoTokenSecret.secretValue.unsafeUnwrap(), // Pity we cannot mount secrets in the same way ECS can :-(
-        LUMIGO_ENDPOINT: String(process.env.LUMIGO_ENDPOINT),
+        LUMIGO_TRACER_HOST: String(process.env.LUMIGO_ENDPOINT) || '',
         AWS_LAMBDA_EXEC_WRAPPER: '/opt/lumigo_wrapper',
       },
       layers: [

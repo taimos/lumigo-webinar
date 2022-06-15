@@ -56,6 +56,8 @@ export class MyContainerStack extends Stack {
       vpc: vpc,
     });
 
+    const lumigoEndpoint = process.env.LUMIGO_ENDPOINT ? `${String(process.env.LUMIGO_ENDPOINT)}/v1/traces` : ''; // This will not be needed after public launch :-)
+
     // Instantiate a 1-container Fargate task with a public load balancer
     new ApplicationLoadBalancedFargateService(this, 'LumigoDemoFargateService', {
       cluster: cluster, // Required
@@ -65,7 +67,7 @@ export class MyContainerStack extends Stack {
         image: ecs.ContainerImage.fromEcrRepository(appImageRepository),
         environment: {
           AUTOWRAPT_BOOTSTRAP: 'lumigo_opentelemetry', // Activate the Lumigo instrumentation!
-          LUMIGO_ENDPOINT: `${String(process.env.LUMIGO_ENDPOINT)}/v1/traces`, // This will not be needed after public launch :-)
+          LUMIGO_ENDPOINT: lumigoEndpoint,
           TARGET_URL: lambdaApi.url!,
           OTEL_SERVICE_NAME: 'lumigo-container-demo', // This will be the service name in Lumigo
         },
